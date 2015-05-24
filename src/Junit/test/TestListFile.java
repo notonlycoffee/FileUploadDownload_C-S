@@ -10,18 +10,28 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-public class Test3 {
+public class TestListFile {
 	public static void main(String[] args) throws Exception, IOException {
-		Map map = new HashMap();
+		Map filemap = new HashMap();
+		String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
+		filemap = getAllFile(url);
+		
+	}
+	
+	
+	public static Map getAllFile(String url) throws Exception {
+		Map map = new LinkedHashMap();
 		CloseableHttpClient httpclient = HttpClients.createDefault();
+		
 		try {
-			HttpGet httpGet = new HttpGet("http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet");
+			HttpGet httpGet = new HttpGet(url);
 
 			CloseableHttpResponse response1 = httpclient.execute(httpGet);
 
@@ -43,7 +53,7 @@ public class Test3 {
 				
 				//System.out.println(html);
 				
-			    map = Test3.parsehtml(html);//对获得的html页面进行筛选
+			    map = TestListFile.parsehtml(html);//对获得的html页面进行筛选
 			    
 //			    Map maphead = (Map) map.get("tablehead");
 //			    String value = (String) maphead.get("filename");
@@ -56,10 +66,13 @@ public class Test3 {
 		} finally {
 			httpclient.close();
 		}
+		return map;
 	}
+	
+	
 
 	public static Map parsehtml(String html) {
-		Map map = new HashMap();  //最终的map集合,存放时是表头信息,以及每个文件的具体信息;
+		Map map = new LinkedHashMap();  //最终的map集合,存放时是表头信息,以及每个文件的具体信息;
 		Map headMap = new HashMap();  //存放表头的信息,包括	文件名字	上传时间	文件描述	上传者	操作
 		
 		html = html.replaceAll("(\r*)(\n*)(\t*)", "");
@@ -134,6 +147,7 @@ public class Test3 {
 					//System.out.println(i+j);
 				}
 				
+				
 				String path = content[4];
 //<a href="servlet/DownLoadServlet?id=af07fca6-f874-441e-b01f-211241730939">下载</a><a href="servlet/ChagenFileServlet?id=af07fca6-f874-441e-b01f-211241730939">修改文件</a><a href="servlet/DeleteFileservlet?id=af07fca6-f874-441e-b01f-211241730939">删除</a>
 
@@ -158,7 +172,7 @@ public class Test3 {
 //				value = (String) filemap.get("3");
 //				System.out.println(value);
 //				
-//				value = (String) filemap.get("4");
+//				value = (String) filemap.get("id");
 //				System.out.println(value);
 				
 				

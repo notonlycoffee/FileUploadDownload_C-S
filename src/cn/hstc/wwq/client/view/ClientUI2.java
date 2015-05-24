@@ -3,6 +3,7 @@ package cn.hstc.wwq.client.view;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -10,26 +11,37 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.List;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.TableCellRenderer;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
@@ -37,7 +49,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import Junit.test.TestListFile;
+
 public class ClientUI2 extends JFrame {
+
 
 	private JLabel banner = new JLabel("XXX文件管理系统", JLabel.CENTER);
 	private JLabel welcomeword = new JLabel("欢迎使用XX文件管理系统", JLabel.CENTER);
@@ -52,6 +67,9 @@ public class ClientUI2 extends JFrame {
 
 	private JLabel successdelete = new JLabel("删除成功!!!", JLabel.CENTER);
 	private JLabel faildelete = new JLabel("删除失败!!!", JLabel.CENTER);
+	
+	private JLabel successdownload = new JLabel("下载成功!!!", JLabel.CENTER);
+	private JLabel faildownload = new JLabel("下载失败!!!", JLabel.CENTER);
 
 	private JPanel containsAll = new JPanel(); // 总体的布局,包括banner,左边,右边的卡片布局
 	private JPanel leftoperation = new JPanel(); // 左边的操作布局
@@ -60,6 +78,12 @@ public class ClientUI2 extends JFrame {
 	private Border lineBorder = new LineBorder(Color.BLACK, 1);// 设置边框
 
 	private CardLayout card = new CardLayout();
+	
+	private JLabel jl = new JLabel("文件编码:");
+	private JTextField jtf = new JTextField(5);//文件编码输入框
+	private JButton changeButton = new JButton("修改");
+	private JButton deleteButton = new JButton("删除");
+	private JButton downloadButton = new JButton("下载");
 
 	private static final String DISPLAYWELCOME = "welcome"; // 卡片容器的标志
 	private static final String UPFILE = "upfile";
@@ -71,7 +95,9 @@ public class ClientUI2 extends JFrame {
 	private static final String FAILCHANGE = "failchange";
 	private static final String SUCCESSDELETE = "successdelete";
 	private static final String FAILDELETE = "faildelete";
-
+	private static final String SUCCESSDOWNLOAD = "successdownload";
+	private static final String FAILDOWNLOAD = "faildownload";
+	
 	private String filepath = "";
 
 	// 文件上传需要的组件
@@ -82,8 +108,10 @@ public class ClientUI2 extends JFrame {
 	private JLabel descriptionLabel = new JLabel("文件描述");
 	private JTextArea descriptionjtext = new JTextArea(8, 30);
 	private JButton submitButton = new JButton("提交");
-
-	public ClientUI2() {
+	
+	private Map filemap = new HashMap();
+	
+	public ClientUI2() throws Exception {
 
 		// 设置字体样式
 		banner.setFont(new Font("Dialog", 1, 50));
@@ -96,6 +124,9 @@ public class ClientUI2 extends JFrame {
 
 		successdelete.setFont(new Font("Dialog", 1, 50));
 		faildelete.setFont(new Font("Dialog", 1, 50));
+		
+		successdownload.setFont(new Font("Dialog", 1, 50));
+		faildownload.setFont(new Font("Dialog", 1, 50));
 
 		// 设置边框
 		leftoperation.setBorder(lineBorder);
@@ -129,11 +160,22 @@ public class ClientUI2 extends JFrame {
 
 		//文件列表页面
 		JPanel filelist = new JPanel();
+		
 		JPanel filelistinside = new JPanel(new FlowLayout(FlowLayout.LEFT, 80, 59));
-		filelistinside.add(new JLabel("文件列表"));
+//		filelistinside.add(new JLabel("文件列表"));
+//		filelist.add(filelistinside);
+		
+		
+		String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
+		filemap = getAllFile(url);
+		JTable tbl = createTable(map2array(filemap));
+		
+		JScrollPane jp = new JScrollPane(tbl);
+		jp.setPreferredSize(new Dimension(620,400));
+		
+		filelistinside = tableinpanel(jp);
+		
 		filelist.add(filelistinside);
-		
-		
 		
 		// 修改文件信息
 		// JPanel changefilejpanel = new JPanel();
@@ -154,6 +196,8 @@ public class ClientUI2 extends JFrame {
 		cardPanel.add(this.FAILCHANGE, failchange);
 		cardPanel.add(this.SUCCESSDELETE, successdelete);
 		cardPanel.add(this.FAILDELETE, faildelete);
+		cardPanel.add(this.SUCCESSDOWNLOAD, successdownload);
+		cardPanel.add(this.FAILDOWNLOAD, faildownload);
 
 		// 设置总体容器的布局,并且加入头部,左部和主体内容
 		containsAll.setLayout(new BorderLayout());
@@ -166,7 +210,9 @@ public class ClientUI2 extends JFrame {
 		uploadButton.addActionListener(new ClickListener());
 		submitButton.addActionListener(new ClickListener());
 		checkfilebutton.addActionListener(new ClickListener());
-		
+		changeButton.addActionListener(new ClickListener());
+		deleteButton.addActionListener(new ClickListener());
+		downloadButton.addActionListener(new ClickListener());
 		
 		this.add(containsAll);
 		this.setTitle("文件上传与管理");
@@ -184,14 +230,40 @@ public class ClientUI2 extends JFrame {
 	// return displaypage;
 	// }
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		ClientUI2 ui = new ClientUI2();
 	}
 
+	public JPanel tableinpanel(JScrollPane jp) {
+		JPanel jpanel = new JPanel(new BorderLayout());
+		
+		JPanel operation = new JPanel(new FlowLayout());
+		
+//		private JLabel jl = new JLabel("文件编码:");
+//		private JTextField jtf = new JTextField();//文件编码输入框
+//		private JButton changeButton = new JButton("修改");
+//		private JButton deleteButton = new JButton("删除");
+		
+		changeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		deleteButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		downloadButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		operation.add(jl);
+		operation.add(jtf);
+		operation.add(changeButton);
+		operation.add(deleteButton);
+		operation.add(downloadButton);
+		
+		jpanel.add(operation, BorderLayout.NORTH);
+		jpanel.add(jp, BorderLayout.CENTER);
+		return jpanel;
+				
+	}
+	
 	class ClickListener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			
 			if (e.getSource() == upfilebutton) {
 				card.show(cardPanel, ClientUI2.UPFILE);
 			}
@@ -228,14 +300,97 @@ public class ClientUI2 extends JFrame {
 				}
 			}
 			if(e.getSource() == checkfilebutton) {
-				card.show(cardPanel, ClientUI2.FILELIST);
+				try {
+					String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
+					Map filemap = new HashMap();
+					filemap = ClientUI2.getAllFile(url);
+					
+					
+					
+					
+					card.show(cardPanel, ClientUI2.FILELIST);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+				
+			}
+			if( e.getSource() == changeButton ){
+				//这里是修改文件信息的页面
+				try {
+					//修改文件信息
+					String filenum = jtf.getText().trim();
+					int num = Integer.parseInt(filenum);
+					if(num <= 0 || num > filemap.size()-1)
+						JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+					
+					//接下来处理文件的修改业务
+					
+					
+				} catch(Exception ex) {
+					JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+				}
 			}
 			
+			if( e.getSource() == deleteButton ){
+				//这里是删除文件的页面
+				try {
+					String filenum = jtf.getText().trim();
+					int num = Integer.parseInt(filenum);
+					if(num <= 0 || num > filemap.size()-1) {
+						JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+						return ;
+					}
+					//接下来处理文件的删除业务
+					filenum = (filemap.size()-num) + "";
+					Map map = (Map) filemap.get(filenum);
+					String id = (String) map.get("id");
+					
+					deletefile(id);
+					card.show(cardPanel, ClientUI2.SUCCESSDELETE);
+					
+					
+				} catch(Exception ex) {
+					JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+					card.show(cardPanel, ClientUI2.FAILDELETE);
+				}
+			}
+			
+			if( e.getSource() == downloadButton) {
+				//这里处理文件下载问题
+				try {
+					//下载文件信息
+					String filenum = jtf.getText().trim();
+					int num = Integer.parseInt(filenum);
+					if(num <= 0 || num > filemap.size()-1)
+						JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+					
+					//接下来处理文件的下载业务
+					filenum = (filemap.size()-num) + "";
+					Map map = (Map) filemap.get(filenum);
+					String id = (String) map.get("id");
+					
+					String destFileName = (String) map.get("0");
+					
+					destFileName = "C:\\\\" + destFileName;
+					
+					ClientUI2.downFile(id, destFileName);
+					card.show(cardPanel, ClientUI2.SUCCESSDOWNLOAD);
+					JOptionPane.showMessageDialog(null, "文件下载默认路径:c盘目录下"); 
+					
+				} catch(Exception ex) {
+					JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+					card.show(cardPanel, ClientUI2.FAILDOWNLOAD);
+				}
+			}
+		
 
 		}
 	}
 	
-	public List listAllFile() {
+	
+	
+	public JTable map2table(Map map) {
+		
 		return null;
 	}
 
@@ -282,5 +437,206 @@ public class ClientUI2 extends JFrame {
 			}
 		}
 	}
+	
+	
+	public static Map getAllFile(String url) throws Exception {
+		Map map = new LinkedHashMap();
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		try {
+			HttpGet httpGet = new HttpGet(url);
+			CloseableHttpResponse response1 = httpclient.execute(httpGet);
+			try {
+				HttpEntity entity1 = response1.getEntity();
+				StringBuffer sb = new StringBuffer();
+				InputStream in = entity1.getContent();
+				InputStreamReader reader = new InputStreamReader(in, "UTF-8");
+				int len = 0;
+				char[] buff = new char[1024];
+				while ((len = reader.read(buff)) > -1) {
+					sb.append(buff);
+				}
+				String html = sb.toString();
+			    map = TestListFile.parsehtml(html);//对获得的html页面进行筛选
+				EntityUtils.consume(entity1);
+			} finally {
+				response1.close();
+			}
+		} finally {
+			httpclient.close();
+		}
+		return map;
+	}
+	
 
-}
+	public static Map parsehtml(String html) {
+		Map map = new LinkedHashMap();  //最终的map集合,存放时是表头信息,以及每个文件的具体信息;
+		Map headMap = new LinkedHashMap();  //存放表头的信息,包括	文件名字	上传时间	文件描述	上传者	操作
+		html = html.replaceAll("(\r*)(\n*)(\t*)", "");
+		Pattern p = Pattern.compile("(<table border=\"1\">)(.*)(</table>)");
+		Matcher m = p.matcher(html);
+		if( m.find()) {
+			String str = m.group(2);
+			//去除<tr> <td> <td style....>
+			str = str.replaceAll("<tr>|<td>|<td style=\"width:200px;\">", "");
+			//对每一项分组 每一项大概是:			文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
+			String [] strarray = str.split("</tr>");  //strarray[0]是    文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
+//strarray[1]开始是
+//logo4-04.png</td>2015-05-19 09:08:14.0</td>这个是最新的</td>最新的</td><a href="servlet/DownLoadServlet?id=4ebd5c0a-9476-464d-af8d-0dc169ac24c5">下载</a><a href="servlet/ChagenFileServlet?id=4ebd5c0a-9476-464d-af8d-0dc169ac24c5">修改文件</a><a href="servlet/DeleteFileservlet?id=4ebd5c0a-9476-464d-af8d-0dc169ac24c5">删除</a></td>
+			//获取表头
+			String [] tablehead = strarray[0].split("</td>");
+//			文件名字
+//			上传时间
+//			文件描述
+//			上传者
+//			操作
+			headMap.put("filename", tablehead[0]);
+			headMap.put("uptime", tablehead[1]);
+			headMap.put("description", tablehead[2]);
+			headMap.put("username", tablehead[3]);
+			headMap.put("operation", tablehead[4]);
+			map.put("tablehead", headMap);
+			//下面是操作文件的具体信息,是文件的具体文件名,上传时间等
+			for(int i = 1 ; i < strarray.length; i++) {
+				String [] content = strarray[i].split("</td>");
+				Map filemap = new HashMap();
+				for( int j = 0 ; j < content.length-1 ; j++) {
+					filemap.put("" + j, content[j]);
+				}
+				String path = content[4];
+				p = Pattern.compile("(.*)(=)(.*)(\">下)(.*)");
+				m = p.matcher(path);
+				if(m.find()) {
+					String id = m.group(3);
+					filemap.put("id", id);
+				} else {
+					System.out.println("n");
+				}
+				map.put(""+i, filemap);
+			}
+		}
+		else {
+			System.out.println("no");
+		}
+		return map;
+    }
+
+	public static JTable createTable(String [] [] str) {
+		   JTable tbl = new JTable(str, 
+	    		   
+	               "文件编号 文件名 上传时间 文件描述 上传者".split(" ")
+	               
+	    		   ); 
+	       tbl.setDefaultRenderer(Object.class, new TableCellTextAreaRenderer()); 
+	       
+	       tbl.setEnabled(false);
+	       
+	       return tbl;
+	   }
+	
+	public static String[][] map2array(Map map) {
+		
+		Map tempMap = new HashMap();
+		String [][] filearray = new String [map.size()-1][5];
+//		System.out.println(map.size()-1);
+		int length = map.size() -1;
+		for( int i = 0 ; i < length ; i++) {
+			
+			tempMap = (Map) map.get("" + (i+1));
+			for( int j = 1 ; j < 5; j++) {
+				String s = (String) tempMap.get("" + (j-1));
+//				System.out.println(s);
+				filearray[i][j] = s;
+			}
+			filearray[length-1-i][0] = (String) map.keySet().toArray()[i+1];  //文件编号
+			
+		}
+		return filearray;
+		
+	}
+	
+	public static void deletefile(String id) throws Exception {
+		String url = "http://127.0.0.1:8080/fileoperation/servlet/DeleteFileservlet?id=";
+		url = url + id;
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		try {
+			HttpGet httpGet = new HttpGet(url);
+			CloseableHttpResponse response1 = httpclient.execute(httpGet);
+			
+			try {
+				System.out.println(response1.getStatusLine());
+				HttpEntity entity1 = response1.getEntity();
+				
+				EntityUtils.consume(entity1);
+			} finally {
+				response1.close();
+			}
+		} finally {
+			httpclient.close();
+		}
+	}
+	
+	public static void downFile(String id, String destFileName)throws Exception {
+		// 生成一个httpclient对象
+		String url = "http://127.0.0.1:8080/fileoperation/servlet/DownLoadServlet?id=";
+		url = url + id;
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpGet httpget = new HttpGet(url);
+		HttpResponse response = httpclient.execute(httpget);
+		HttpEntity entity = response.getEntity();
+		InputStream in = entity.getContent();
+		File file = new File(destFileName);
+		try {
+			FileOutputStream fout = new FileOutputStream(file);
+			int l = -1;
+			byte[] tmp = new byte[1024];
+			while ((l = in.read(tmp)) != -1) {
+				fout.write(tmp, 0, l);
+				// 注意这里如果用OutputStream.write(buff)的话，图片会失真，大家可以试试
+			}
+			fout.flush();
+			fout.close();
+		} finally {
+			// 关闭低层流。
+			in.close();
+		}
+		httpclient.close();
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}//类在这里结束
+
+
+
+
+class TableCellTextAreaRenderer extends JTextArea implements TableCellRenderer { 
+	   public TableCellTextAreaRenderer() { 
+	       setLineWrap(true); 
+	       setWrapStyleWord(true); 
+	   } 
+
+	   public Component getTableCellRendererComponent(JTable table, Object value, 
+	           boolean isSelected, boolean hasFocus, int row, int column) { 
+	       // 计算当下行的最佳高度 
+	       int maxPreferredHeight = 0; 
+	       for (int i = 0; i < table.getColumnCount(); i++) { 
+	           setText("" + table.getValueAt(row, i)); 
+	           setSize(table.getColumnModel().getColumn(column).getWidth(), 0); 
+	           maxPreferredHeight = Math.max(maxPreferredHeight, getPreferredSize().height); 
+	       } 
+
+	       if (table.getRowHeight(row) != maxPreferredHeight)  // 少了这行则处理器瞎忙 
+	           table.setRowHeight(row, maxPreferredHeight); 
+
+	       setText(value == null ? "" : value.toString()); 
+	       return this; 
+	   } 
+	}
+	

@@ -10,7 +10,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-public class Test5 {
+public class DownFileTest {
 
 	
 	//这个是下载文件的代码..很重要的哦
@@ -20,9 +20,10 @@ public class Test5 {
 		getFile(url, destFileName);
 	}
 	
-	public static void getFile(String url, String destFileName)
-			throws Exception {
+	public static void getFile(String id, String destFileName)throws Exception {
 		// 生成一个httpclient对象
+		String url = "http://127.0.0.1:8080/fileoperation/servlet/DownLoadServlet?id=";
+		url = url + id;
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		HttpGet httpget = new HttpGet(url);
 		HttpResponse response = httpclient.execute(httpget);

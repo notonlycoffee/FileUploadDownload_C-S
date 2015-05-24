@@ -92,13 +92,18 @@ public class TestListFile {
 //			System.out.println(str);
 //			System.out.println("===========================================================================================================================");
 			
+			String [] strc = str.split("</table>");
+//			System.out.println(strc.length);
+			
+			str = strc[0];
 			
 			//对每一项分组 每一项大概是:			文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 			String [] strarray = str.split("</tr>");  //strarray[0]是    文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 //strarray[1]开始是
 //logo4-04.png</td>2015-05-19 09:08:14.0</td>这个是最新的</td>最新的</td><a href="servlet/DownLoadServlet?id=4ebd5c0a-9476-464d-af8d-0dc169ac24c5">下载</a><a href="servlet/ChagenFileServlet?id=4ebd5c0a-9476-464d-af8d-0dc169ac24c5">修改文件</a><a href="servlet/DeleteFileservlet?id=4ebd5c0a-9476-464d-af8d-0dc169ac24c5">删除</a></td>
 
-			/*  显示strarray数组里面的元素
+			/*
+			//  显示strarray数组里面的元素
 			System.out.println(strarray.length);
 			
 			for( String s : strarray) {
@@ -107,6 +112,7 @@ public class TestListFile {
 				System.out.println("***************************************************************");
 			}
 			*/
+			
 			//获取表头
 			String [] tablehead = strarray[0].split("</td>");
 //			文件名字

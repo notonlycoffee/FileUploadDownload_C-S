@@ -16,8 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,14 +41,20 @@ import javax.swing.table.TableCellRenderer;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
 import Junit.test.TestListFile;
@@ -109,6 +117,19 @@ public class ClientUI2 extends JFrame {
 	private JTextArea descriptionjtext = new JTextArea(8, 30);
 	private JButton submitButton = new JButton("提交");
 	
+	
+	
+	//文件修改需要的组件
+	private JLabel changeUserNameLabel = new JLabel("上传用户");
+	private JTextField changeUserNameInput = new JTextField(10);
+	private JLabel changeBank = new JLabel("      ");
+	private JLabel chagenFileNameLabel = new JLabel("文件名字");
+	private JTextField changeFileNameInput = new JTextField(10);
+	private JLabel changeDescriptionLabel = new JLabel("文件描述");
+	private JTextArea changeDescriptionjtext = new JTextArea(8, 30);
+	private JButton changeSubmitButton = new JButton("修改");
+	
+	
 	private Map filemap = new HashMap();
 	
 	public ClientUI2() throws Exception {
@@ -137,8 +158,8 @@ public class ClientUI2 extends JFrame {
 		leftoperation.setPreferredSize(new Dimension(100, 450));
 		leftoperation.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 40));
 		upfilebutton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		checkfilebutton.setCursor(Cursor
-				.getPredefinedCursor(Cursor.HAND_CURSOR));
+		checkfilebutton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		changeSubmitButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		// 给左边加入组件
 		leftoperation.add(upfilebutton);
 		leftoperation.add(checkfilebutton);
@@ -158,9 +179,36 @@ public class ClientUI2 extends JFrame {
 		p_file.add(submitButton);
 		upfilejpanel.add(p_file);
 
+		
+		//文件修改页面
+		JPanel changefilejpanel = new JPanel();
+		JPanel c_file = new JPanel(new FlowLayout(FlowLayout.LEFT, 130, 30));
+		c_file.setPreferredSize(new Dimension(600, 400));
+		
+		c_file.add(changeUserNameLabel);
+		c_file.add(changeUserNameInput);
+		c_file.add(changeBank);
+		c_file.add(changeBank);
+		c_file.add(chagenFileNameLabel);
+		c_file.add(changeFileNameInput);
+		c_file.add(changeDescriptionLabel);
+		c_file.add(changeDescriptionjtext);
+		c_file.add(changeSubmitButton);
+		changefilejpanel.add(c_file);
+		
+//		private JLabel changeUserNameLabel = new JLabel("上传用户");
+//		private JTextField changeUserNameInput = new JTextField(10);
+//		private JLabel changeBank = new JLabel("      ");
+//		private JLabel chagenFileNameLabel = new JLabel("文件名字");
+//		private JTextField changeFileNameInput = new JTextField(10);
+//		private JLabel changeDescriptionLabel = new JLabel("文件描述");
+//		private JTextArea changeDescriptionjtext = new JTextArea(8, 30);
+//		private JButton changeSubmitButton = new JButton("修改");
+		
+		
+		
 		//文件列表页面
 		JPanel filelist = new JPanel();
-		
 		JPanel filelistinside = new JPanel(new FlowLayout(FlowLayout.LEFT, 80, 59));
 //		filelistinside.add(new JLabel("文件列表"));
 //		filelist.add(filelistinside);
@@ -191,8 +239,10 @@ public class ClientUI2 extends JFrame {
 		cardPanel.add(this.SUCCESSUPLOAD, successupload);
 		cardPanel.add(this.FAILUPLOAD, failupload);
 	    cardPanel.add(this.FILELIST, filelist);
-		// cardPanel.add(this.CHANGEFILE, );
-		cardPanel.add(this.SUCCESSCHANGE, successchange);
+		
+	    cardPanel.add(this.CHANGEFILE, changefilejpanel);
+		
+	    cardPanel.add(this.SUCCESSCHANGE, successchange);
 		cardPanel.add(this.FAILCHANGE, failchange);
 		cardPanel.add(this.SUCCESSDELETE, successdelete);
 		cardPanel.add(this.FAILDELETE, faildelete);
@@ -213,6 +263,7 @@ public class ClientUI2 extends JFrame {
 		changeButton.addActionListener(new ClickListener());
 		deleteButton.addActionListener(new ClickListener());
 		downloadButton.addActionListener(new ClickListener());
+		changeSubmitButton.addActionListener(new ClickListener());
 		
 		this.add(containsAll);
 		this.setTitle("文件上传与管理");
@@ -320,17 +371,61 @@ public class ClientUI2 extends JFrame {
 					//修改文件信息
 					String filenum = jtf.getText().trim();
 					int num = Integer.parseInt(filenum);
-					if(num <= 0 || num > filemap.size()-1)
+					if(num <= 0 || num > filemap.size()-1){
 						JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+						return ;
+					}
 					
 					//接下来处理文件的修改业务
+					//
+					filenum = (filemap.size()-num) + "";
+					Map map = (Map) filemap.get(filenum);
 					
+					String id = (String) map.get("id");
+					System.out.println(id);
+					//数据回显
+					String username = (String) map.get("3");
+					String filename = (String) map.get("0");
+					String description = (String) map.get("2");
 					
+					changeUserNameInput.setText(username);
+					changeFileNameInput.setText(filename);
+					changeDescriptionjtext.setText(description);
+					
+					card.show(cardPanel, ClientUI2.CHANGEFILE);
+
 				} catch(Exception ex) {
 					JOptionPane.showMessageDialog(null, "必须是规定的文件编码号", "友情提示",JOptionPane.ERROR_MESSAGE);
+					card.show(cardPanel, ClientUI2.FAILCHANGE);
 				}
 			}
 			
+			if(e.getSource() == changeSubmitButton) {
+				try {
+					System.out.println("这里就是修改文件的按钮");
+					
+					String username = changeUserNameInput.getText().trim();
+							
+					String filename = changeFileNameInput.getText().trim();
+					
+					String description = changeDescriptionjtext.getText().trim();
+					
+					String filenum = jtf.getText().trim();
+					int num = Integer.parseInt(filenum);
+					filenum = (filemap.size()-num) + "";
+					Map map = (Map) filemap.get(filenum);
+					
+					String id = (String) map.get("id");
+					
+					System.out.println(id);
+					chagenfile(username,filename,description,id);
+					card.show(cardPanel, ClientUI2.SUCCESSCHANGE);
+				} catch(Exception ex) {
+					card.show(cardPanel, ClientUI2.FAILCHANGE);
+				}
+				
+			}
+			 
 			if( e.getSource() == deleteButton ){
 				//这里是删除文件的页面
 				try {
@@ -382,11 +477,37 @@ public class ClientUI2 extends JFrame {
 					card.show(cardPanel, ClientUI2.FAILDOWNLOAD);
 				}
 			}
-		
+		}
 
+	public void chagenfile(String username, String filename,String description, String id) throws Exception {
+		String url = "http://127.0.0.1:8080/fileoperation/servlet/ChagenFileServlet?id=";
+		url = url + id.trim();
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		try {
+			HttpPost httpPost = new HttpPost(url);
+			
+			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+			
+			nvps.add(new BasicNameValuePair("username", username));
+			nvps.add(new BasicNameValuePair("filename", filename));
+			nvps.add(new BasicNameValuePair("description", description));
+			
+			StringEntity entity = new UrlEncodedFormEntity(nvps, HTTP.UTF_8);
+			
+			httpPost.setEntity(entity);
+			CloseableHttpResponse response2 = httpclient.execute(httpPost);
+			try {
+				System.out.println(response2.getStatusLine());
+				HttpEntity entity2 = response2.getEntity();
+				EntityUtils.consume(entity2);
+			} finally {
+				response2.close();
+			}
+		} finally {
+			httpclient.close();
 		}
 	}
-	
+	}
 	
 	
 	public JTable map2table(Map map) {
@@ -478,6 +599,11 @@ public class ClientUI2 extends JFrame {
 			String str = m.group(2);
 			//去除<tr> <td> <td style....>
 			str = str.replaceAll("<tr>|<td>|<td style=\"width:200px;\">", "");
+			
+			String [] strc = str.split("</table>");
+//			System.out.println(strc.length);
+			
+			str = strc[0];
 			//对每一项分组 每一项大概是:			文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 			String [] strarray = str.split("</tr>");  //strarray[0]是    文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 //strarray[1]开始是
@@ -502,7 +628,12 @@ public class ClientUI2 extends JFrame {
 				for( int j = 0 ; j < content.length-1 ; j++) {
 					filemap.put("" + j, content[j]);
 				}
+				System.out.println("*******************************************");
+				System.out.println(content.length);
+				System.out.println("*******************************************");
 				String path = content[4];
+				
+				
 				p = Pattern.compile("(.*)(=)(.*)(\">下)(.*)");
 				m = p.matcher(path);
 				if(m.find()) {

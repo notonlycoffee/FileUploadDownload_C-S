@@ -129,6 +129,14 @@ public class ClientUI2 extends JFrame {
 	private JTextArea changeDescriptionjtext = new JTextArea(8, 30);
 	private JButton changeSubmitButton = new JButton("修改");
 	
+	//获取文件列表需要的组件
+	private JPanel filelist = new JPanel();
+	private JPanel filelistinside = new JPanel(new FlowLayout(FlowLayout.LEFT, 80, 59));
+	
+	private JPanel jpanel = new JPanel(new BorderLayout());
+	private JPanel operation = new JPanel(new FlowLayout());
+	
+	
 	
 	private Map filemap = new HashMap();
 	
@@ -208,23 +216,23 @@ public class ClientUI2 extends JFrame {
 		
 		
 		//文件列表页面
-		JPanel filelist = new JPanel();
-		JPanel filelistinside = new JPanel(new FlowLayout(FlowLayout.LEFT, 80, 59));
+		
 //		filelistinside.add(new JLabel("文件列表"));
 //		filelist.add(filelistinside);
 		
+/***************************************************************************************************/
+//		System.out.println("change in line 216");
+//		String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
+//		filemap = getAllFile(url);
+//		JTable tbl = createTable(map2array(filemap));
+//		
+//		JScrollPane jp = new JScrollPane(tbl);
+//		jp.setPreferredSize(new Dimension(620,400));
+//		
+//		filelistinside = tableinpanel(jp);
 		
-		String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
-		filemap = getAllFile(url);
-		JTable tbl = createTable(map2array(filemap));
-		
-		JScrollPane jp = new JScrollPane(tbl);
-		jp.setPreferredSize(new Dimension(620,400));
-		
-		filelistinside = tableinpanel(jp);
-		
-		filelist.add(filelistinside);
-		
+//		filelist.add(filelistinside);
+/***************************************************************************************************/		
 		// 修改文件信息
 		// JPanel changefilejpanel = new JPanel();
 		// changefilejpanel.add(p_file);
@@ -286,9 +294,7 @@ public class ClientUI2 extends JFrame {
 	}
 
 	public JPanel tableinpanel(JScrollPane jp) {
-		JPanel jpanel = new JPanel(new BorderLayout());
 		
-		JPanel operation = new JPanel(new FlowLayout());
 		
 //		private JLabel jl = new JLabel("文件编码:");
 //		private JTextField jtf = new JTextField();//文件编码输入框
@@ -298,6 +304,7 @@ public class ClientUI2 extends JFrame {
 		changeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		deleteButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		downloadButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		
 		operation.add(jl);
 		operation.add(jtf);
 		operation.add(changeButton);
@@ -319,7 +326,7 @@ public class ClientUI2 extends JFrame {
 				card.show(cardPanel, ClientUI2.UPFILE);
 			}
 			if (e.getSource() == uploadButton) {
-				System.out.println("这里处理文件上传");
+//				System.out.println("这里处理文件上传");
 
 				JFileChooser fc = new JFileChooser();
 				fc.setDialogTitle("请选择要上传的文件...");
@@ -327,7 +334,7 @@ public class ClientUI2 extends JFrame {
 				fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 				if (JFileChooser.APPROVE_OPTION == fc.showOpenDialog(cardPanel)) {
 					filepath = fc.getSelectedFile().getPath();
-					System.out.println(filepath);
+//					System.out.println(filepath);
 				}
 			}
 			if (e.getSource() == submitButton) {
@@ -335,9 +342,9 @@ public class ClientUI2 extends JFrame {
 				String username = userNameInput.getText().trim();
 				String description = descriptionjtext.getText();
 
-				System.out.println(username);
-				System.out.println(description);
-				System.out.println(filepath);
+//				System.out.println(username);
+//				System.out.println(description);
+//				System.out.println(filepath);
 				
 				String url = "http://127.0.0.1:8080/fileoperation/servlet/UpfileServlet";
 				httpfileupload(filepath, username, description, url);
@@ -352,13 +359,22 @@ public class ClientUI2 extends JFrame {
 			}
 			if(e.getSource() == checkfilebutton) {
 				try {
-					String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
-					Map filemap = new HashMap();
-					filemap = ClientUI2.getAllFile(url);
-					System.out.println("*******************************************************");
-					System.out.println("now this is checkfile part ");
-					System.out.println("*******************************************************");
 					
+					String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
+					filemap = ClientUI2.getAllFile(url);
+					JTable tbl = createTable(map2array(filemap));
+					JScrollPane jp = new JScrollPane(tbl);
+					jp.setPreferredSize(new Dimension(620,400));
+					filelistinside = tableinpanel(jp);
+					filelist.add(filelistinside);
+					
+//					System.out.println("*******************************************************");
+//					System.out.println("now this is checkfile part ");
+//					System.out.println("*******************************************************");
+					
+//					String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
+//					filemap = getAllFile(url);
+				
 					
 					
 					
@@ -385,7 +401,7 @@ public class ClientUI2 extends JFrame {
 					Map map = (Map) filemap.get(filenum);
 					
 					String id = (String) map.get("id");
-					System.out.println(id);
+//					System.out.println(id);
 					//数据回显
 					String username = (String) map.get("3");
 					String filename = (String) map.get("0");
@@ -405,7 +421,7 @@ public class ClientUI2 extends JFrame {
 			
 			if(e.getSource() == changeSubmitButton) {
 				try {
-					System.out.println("这里就是修改文件的按钮");
+//					System.out.println("这里就是修改文件的按钮");
 					
 					String username = changeUserNameInput.getText().trim();
 							
@@ -420,7 +436,7 @@ public class ClientUI2 extends JFrame {
 					
 					String id = (String) map.get("id");
 					
-					System.out.println(id);
+//					System.out.println(id);
 					chagenfile(username,filename,description,id);
 					card.show(cardPanel, ClientUI2.SUCCESSCHANGE);
 				} catch(Exception ex) {
@@ -500,7 +516,7 @@ public class ClientUI2 extends JFrame {
 			httpPost.setEntity(entity);
 			CloseableHttpResponse response2 = httpclient.execute(httpPost);
 			try {
-				System.out.println(response2.getStatusLine());
+//				System.out.println(response2.getStatusLine());
 				HttpEntity entity2 = response2.getEntity();
 				EntityUtils.consume(entity2);
 			} finally {
@@ -508,7 +524,7 @@ public class ClientUI2 extends JFrame {
 			}
 		} finally {
 			httpclient.close();
-			System.out.println("连接已经关闭");
+//			System.out.println("连接已经关闭");
 		}
 	}
 	}
@@ -538,12 +554,11 @@ public class ClientUI2 extends JFrame {
 					.println("executing request " + httppost.getRequestLine());
 			CloseableHttpResponse response = httpclient.execute(httppost);
 			try {
-				System.out.println("----------------------------------------");
-				System.out.println(response.getStatusLine());
+//				System.out.println("----------------------------------------");
+//				System.out.println(response.getStatusLine());
 				HttpEntity resEntity = response.getEntity();
 				if (resEntity != null) {
-					System.out.println("Response content length: "
-							+ resEntity.getContentLength());
+//					System.out.println("Response content length: "+ resEntity.getContentLength());
 				}
 				EntityUtils.consume(resEntity);
 			} finally {
@@ -607,14 +622,17 @@ public class ClientUI2 extends JFrame {
 			//去除<tr> <td> <td style....>
 			str = str.replaceAll("<tr>|<td>|<td style=\"width:200px;\">", "");
 			
+//			System.out.println("line 626");
+//			System.out.println(str);
+			
 			String [] strc = str.split("</table>");
 //			System.out.println(strc.length);
 			
 			str = strc[0];
 			
-			System.out.println("***************************************************");
-			System.out.println(str);
-			System.out.println("***************************************************");
+//			System.out.println("***************************************************");
+//			System.out.println(str);
+//			System.out.println("***************************************************");
 			
 			
 			//对每一项分组 每一项大概是:			文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
@@ -641,9 +659,10 @@ public class ClientUI2 extends JFrame {
 				for( int j = 0 ; j < content.length-1 ; j++) {
 					filemap.put("" + j, content[j]);
 				}
-				System.out.println("*******************************************");
-				System.out.println(content.length);
-				System.out.println("*******************************************");
+//				System.out.println("*******************************************");
+//				System.out.println(content.length);
+//				System.out.println("line 650");
+//				System.out.println("*******************************************");
 				String path = content[4];
 				
 				
@@ -707,7 +726,7 @@ public class ClientUI2 extends JFrame {
 			CloseableHttpResponse response1 = httpclient.execute(httpGet);
 			
 			try {
-				System.out.println(response1.getStatusLine());
+//				System.out.println(response1.getStatusLine());
 				HttpEntity entity1 = response1.getEntity();
 				
 				EntityUtils.consume(entity1);

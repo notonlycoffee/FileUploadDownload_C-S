@@ -355,6 +355,9 @@ public class ClientUI2 extends JFrame {
 					String url = "http://127.0.0.1:8080/fileoperation/servlet/ListFileServlet";
 					Map filemap = new HashMap();
 					filemap = ClientUI2.getAllFile(url);
+					System.out.println("*******************************************************");
+					System.out.println("now this is checkfile part ");
+					System.out.println("*******************************************************");
 					
 					
 					
@@ -505,6 +508,7 @@ public class ClientUI2 extends JFrame {
 			}
 		} finally {
 			httpclient.close();
+			System.out.println("连接已经关闭");
 		}
 	}
 	}
@@ -576,11 +580,14 @@ public class ClientUI2 extends JFrame {
 				while ((len = reader.read(buff)) > -1) {
 					sb.append(buff);
 				}
+				in.close();
+				reader.close();
 				String html = sb.toString();
-			    map = TestListFile.parsehtml(html);//对获得的html页面进行筛选
+			    map = parsehtml(html);//对获得的html页面进行筛选
 				EntityUtils.consume(entity1);
 			} finally {
 				response1.close();
+				
 			}
 		} finally {
 			httpclient.close();
@@ -604,6 +611,12 @@ public class ClientUI2 extends JFrame {
 //			System.out.println(strc.length);
 			
 			str = strc[0];
+			
+			System.out.println("***************************************************");
+			System.out.println(str);
+			System.out.println("***************************************************");
+			
+			
 			//对每一项分组 每一项大概是:			文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 			String [] strarray = str.split("</tr>");  //strarray[0]是    文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 //strarray[1]开始是

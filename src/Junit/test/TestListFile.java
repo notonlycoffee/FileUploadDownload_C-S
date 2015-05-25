@@ -97,6 +97,7 @@ public class TestListFile {
 			
 			str = strc[0];
 			
+			
 			//对每一项分组 每一项大概是:			文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 			String [] strarray = str.split("</tr>");  //strarray[0]是    文件名字</td>上传时间</td>文件描述</td>上传者</td>操作</td>
 //strarray[1]开始是

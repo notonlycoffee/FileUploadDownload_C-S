@@ -111,7 +111,7 @@ public class ClientUI2 extends JFrame {
 	// 文件上传需要的组件
 	private JLabel userNameLabel = new JLabel("上传用户");
 	private JTextField userNameInput = new JTextField(10);
-	private JLabel bank = new JLabel("      ");
+//	private JLabel bank = new JLabel("      ");
 	private JButton uploadButton = new JButton("上传文件");
 	private JLabel descriptionLabel = new JLabel("文件描述");
 	private JTextArea descriptionjtext = new JTextArea(8, 30);
@@ -181,7 +181,7 @@ public class ClientUI2 extends JFrame {
 		p_file.add(userNameLabel);
 		p_file.add(userNameInput);
 		p_file.add(uploadButton);
-		p_file.add(bank);
+//		p_file.add(bank);
 		p_file.add(descriptionLabel);
 		p_file.add(descriptionjtext);
 		p_file.add(submitButton);
